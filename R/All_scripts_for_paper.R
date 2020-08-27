@@ -1,9 +1,12 @@
-source("simulated_datasets.R")
-source("shapley_helpers.R")
-source("utility_functions.R")
-source("comparison_helpers.R")
-source("Shapley_helpers.R")
-source("Applications_helpers.R")
+library(devtools)
+## Uncomment to install shapr
+# devtools::install_github("NorskRegnesentral/shapr")
+library(shapr)
+library(SHAPforxgboost)
+library(speedglm) # speedlm
+library(Rfast) # dcor bcdcor
+library(dHSIC) # dHSIC
+library(expm) # sqrtm
 library(xgboost)
 library(dplyr)
 library(tidyr)
@@ -12,6 +15,13 @@ library(latex2exp)
 library(reticulate)
 library(reshape2)
 library(naniar)
+source("simulated_datasets.R")
+source("shapley_helpers.R")
+source("utility_functions.R")
+source("comparison_helpers.R")
+source("Shapley_helpers.R")
+source("Applications_helpers.R")
+
 
 ### R2 LINEAR EXAMPLE -------------------------------------------------------
 n <- 1e4
@@ -33,7 +43,7 @@ for (i in 1:N) {
 coeffs <- data.frame(coeffs)
 names(coeffs) <- c("intercept", "slope")
 mean_coeffs <- as.data.frame(t(apply(coeffs, MARGIN = 2, FUN = mean)))
-pdf(file="R2_plot.pdf", width=5, height=4)
+#pdf(file="R2_plot.pdf", width=5, height=4)
 ggplot(dat) +
   geom_point(aes(y=y,x=x4), alpha = 0.05, shape = 8) +
   theme_minimal() +
@@ -43,7 +53,7 @@ ggplot(dat) +
   geom_abline(data = mean_coeffs, 
               aes(slope=slope, intercept=intercept),
               alpha=0.5, colour="indianred", size=0.5)
-dev.off()
+#dev.off()
 quantile(R2, probs = c(0.025, 0.975))
 mean(R2)
 
