@@ -1,5 +1,5 @@
 source("utility_functions.R")
-source("shapley_helpers.R")
+source("Shapley_helpers.R")
 source("simulated_datasets.R")
 
 #devtools::install_github("NorskRegnesentral/shapr")
