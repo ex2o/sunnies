@@ -184,7 +184,7 @@ compare_DARRP <- function(sdat, modelt, features,
                           valid = F, all_labs = T) {
   
   if (valid & is.null(modelt$pred_valid)) {stop(paste0("Make sure",
-    "modelt holds validation set results when valid = TRUE"))}
+                                                       "modelt holds validation set results when valid = TRUE"))}
   samp_train <- 1:nrow(sdat$x_train)
   samp_test <- 1:nrow(sdat$x_test)
   samp_valid <- if(valid) {1:nrow(sdat$x_valid)} else {NULL}
@@ -220,14 +220,14 @@ compare_DARRP <- function(sdat, modelt, features,
   s9 <- if (valid) {shapley(r3, X3, utility = utility)} else {NULL}
   s <- rbind(s0,s1,s2,s3,s4,s5,s6,s7,s8,s9)
   colnames(s) <- feature_names
-
+  
   return(s)
 }
 
 compare_DARRP2 <- function(sdat4way, modelt, features, 
-                          feature_names, 
-                          utility = DC,
-                          sample_size = 1e3) {
+                           feature_names, 
+                           utility = DC,
+                           sample_size = 1e3) {
   
   samp_test <- 1:nrow(sdat4way$x_test)
   samp_males <- 1:nrow(sdat4way$x_males)
@@ -285,16 +285,16 @@ compare_DARRP_N <- function(sdat, modelt, features,
 }
 
 compare_DARRP_N2 <- function(sdat4way, modelt, features, 
-                            feature_names, 
-                            utility = DC,
-                            sample_size = 1e3, 
-                            N = 100) {
+                             feature_names, 
+                             utility = DC,
+                             sample_size = 1e3, 
+                             N = 100) {
   d <- length(features)
   cd <- array(dim = c(9, d, N))
   for (i in 1:N) {
     cdi <- compare_DARRP2(sdat4way, modelt, features, 
-                         feature_names, utility = DC,
-                         sample_size = sample_size)
+                          feature_names, utility = DC,
+                          sample_size = sample_size)
     cd[,,i] <- cdi
     
   }
@@ -306,7 +306,8 @@ plot_compare_DARRP_N_drift2 <- function(
   cdN_all, p = c(0.025,0.975), d = dim(cdN_all)[2],
   feature_names = paste0("X",1:d), shap_index = c(1,5), #only two allowed
   shap_type = c("ADL", "ADR"), y_name = "Shapley value",
-  leg_labs = unname(c(TeX("$X_1"),TeX("$X_2"),TeX("$X_3"),TeX("$X_4")))) {
+  leg_labs = unname(c(TeX("$X_1"),TeX("$X_2"),TeX("$X_3"),TeX("$X_4"))),
+  type="both") {
   
   m <- dim(cdN_all)[4]
   N <- dim(cdN_all)[3]
@@ -333,22 +334,61 @@ plot_compare_DARRP_N_drift2 <- function(
     pivot_longer(all_of(feature_names), names_to = "feature") %>%
     pivot_wider(names_from = CI, values_from = value, names_prefix = "CI")
   
-  plt <- ggplot(data=cd2, aes(x=time, y=CI1, fill=feature,
-                              shape=feature)) +
-    geom_point() + geom_line() +
-    geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
-    scale_x_continuous(breaks = 0:m) +
-    scale_y_continuous(name = y_name) +
-    scale_shape_discrete(labels=leg_labs) +
-    scale_fill_discrete(labels=leg_labs) +
-    theme_set(theme_minimal())  +
-    facet_grid(S ~ .) +
-    theme(strip.text.y.right = element_text(angle = 0)) +
-    geom_line(data = cdN_lines,
-              mapping = aes(y=value, x=t, group=interaction(i,feature),
-                            colour=interaction(i,feature)),
-              alpha=0.02, colour="grey20"); plt
-  return(plt)
+  if (type == "both") {
+    ggplot(data=cd2, aes(x=time, y=CI1, fill=feature,
+                         shape=feature)) +
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0)) +
+      geom_line(data = cdN_lines,
+                mapping = aes(y=value, x=t, group=interaction(i,feature),
+                              colour=interaction(i,feature)),
+                alpha=0.02, colour="grey20")
+    
+  } else if (type == "ADL") {
+    ggplot(data=cd2 %>% filter(S == "ADL"), aes(x=time, y=CI1, fill=feature,
+                                                shape=feature)) +
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0)) +
+      geom_line(data = cdN_lines %>% filter(S == "ADL"),
+                mapping = aes(y=value, x=t, group=interaction(i,feature),
+                              colour=interaction(i,feature)),
+                alpha=0.02, colour="grey20")
+    
+  } else if (type == "ADR") {
+    ggplot(data=cd2 %>% filter(S == "ADR"), aes(x=time, y=CI1, fill=feature,
+                                                shape=feature)) +
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0)) +
+      geom_line(data = cdN_lines %>% filter(S == "ADR"),
+                mapping = aes(y=value, x=t, group=interaction(i,feature),
+                              colour=interaction(i,feature)),
+                alpha=0.02, colour="grey20")
+    
+  } else {
+    stop("type ", type, " not recognised") 
+  }
+  
 }
 
 plot_compare_DARRP_N_interact_all <- function(
@@ -357,7 +397,9 @@ plot_compare_DARRP_N_interact_all <- function(
   feature_names = paste0("X",1:d),
   y_name = "Shapley value",
   leg_labs = unname(TeX(paste0("$X_",1:d))),
-  colpal=c("#CC79A7", "#0072B2", "#D55E00")) {
+  colpal=c("#CC79A7", "#0072B2", "#D55E00"),
+  type = "both",
+  ylim = c(0,0.4)) {
   
   s <- dim(cdN_all)[1]
   d <- dim(cdN_all)[2]
@@ -398,34 +440,94 @@ plot_compare_DARRP_N_interact_all <- function(
     pivot_longer(all_of(feature_names), names_to="feature")
   
   # The flossy dumbbell plot
-  ggplot(data=cdN2ADLP) +
-    geom_segment(data=cd3, aes(x=feature, 
-                               xend=feature, 
-                               y=ADL, 
-                               yend=ADP), color="grey75", size=2) +
-    geom_segment(data=filter(cdCI,type=="ADR"), 
-                 aes(x=feature, 
-                     xend=feature, 
-                     yend=CI1, 
-                     y=0), color="indianred4", size=2) +
-    theme_set(theme_minimal()) +
-    xlab("") +
-    theme(strip.text.y = element_blank()) +
-    theme(strip.text.x = element_blank()) +
-    facet_grid(facet~.) +
-    ylab("Shapley value") +
-    scale_x_discrete(labels=leg_labs) +
-    scale_fill_manual(values=colpal) +
-    scale_colour_manual(values=colpal) +
-    scale_shape_manual(values=c(15,16,17)) +
-    geom_jitter(alpha=0.4,width=0.14,size=0.75,
-                aes(x=feature,y=value,colour=type,shape=type)) +
-    geom_point(data=cdCI, aes(x=feature, y=CI1, shape=type),  size=1) +
-    geom_crossbar(data=cdCI, fatten=1, alpha=0.3, width=0.3,linetype=0,
-                  aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
-                      colour=type, fill=type)) +
-    geom_hline(data=data.frame(facet="F2"),
-               aes(yintercept=0), colour="grey",linetype=1)
+  if (type == "both") {
+    ggplot(data=cdN2ADLP) +
+      geom_segment(data=cd3, aes(x=feature, 
+                                 xend=feature, 
+                                 y=ADL, 
+                                 yend=ADP), color="grey75", size=2) +
+      geom_segment(data=filter(cdCI,type=="ADR"), 
+                   aes(x=feature, 
+                       xend=feature, 
+                       yend=CI1, 
+                       y=0), color="indianred4", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      theme(strip.text.y = element_blank()) +
+      theme(strip.text.x = element_blank()) +
+      facet_grid(facet~.) +
+      ylab("Shapley value") +
+      scale_x_discrete(labels=leg_labs) +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      geom_point(data=cdCI, aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI, fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey",linetype=1) +
+      ylim(ylim)
+  } else if (type == "ADLADP") {
+    ggplot(data=cdN2ADLP %>% filter(type != "ADR")) +
+      geom_segment(data=cd3, aes(x=feature, 
+                                 xend=feature, 
+                                 y=ADL, 
+                                 yend=ADP), color="grey75", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      theme(strip.text.y = element_blank()) +
+      theme(strip.text.x = element_blank()) +
+      facet_grid(~.) +
+      ylab("Shapley value") +
+      scale_x_discrete(labels=leg_labs) +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      geom_point(data=cdCI %>% filter(type != "ADR"), 
+                 aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI %>% filter(type != "ADR"), 
+                    fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey",linetype=1) +
+      ylim(ylim) 
+  } else if (type == "ADR") {
+    ggplot(data=cdN2ADLP %>% filter(type == "ADR")) +
+      geom_segment(data=filter(cdCI,type=="ADR"), 
+                   aes(x=feature, 
+                       xend=feature, 
+                       yend=CI1, 
+                       y=0), color="indianred4", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      theme(strip.text.y = element_blank()) +
+      theme(strip.text.x = element_blank()) +
+      facet_grid(~.) +
+      ylab("Shapley value") +
+      scale_x_discrete(labels=leg_labs) +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      geom_point(data=cdCI %>% filter(type == "ADR"), 
+                 aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI %>% filter(type == "ADR"), 
+                    fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey",linetype=1) +
+      ylim(ylim)    
+  } else {
+    stop("type ", type, " not recognised") 
+  }
 }
 
 compare_DARRRP_N_gender_4way <- function(
@@ -474,7 +576,8 @@ plot_compare_DARRP_N_4way <- function(
   cdN_all, p = c(0.025,0.975),
   d = dim(cdN_all)[2],
   y_name = "Shapley value",
-  colpal=c("#CC79A7", "#0072B2", "#D55E00")) {
+  colpal=c("#CC79A7", "#0072B2", "#D55E00"),
+  type = "both") {
   
   p = c(0.025,0.975)
   d = dim(cdN_all)[2]
@@ -533,32 +636,89 @@ plot_compare_DARRP_N_4way <- function(
     filter(type %in% c("ADL","ADP","ADR")) %>% 
     pivot_longer(all_of(feature_names), names_to="feature")
   
-  ggplot(data=cdN2) +
-    geom_segment(data=cd3, aes(x=feature, 
-                               xend=feature, 
-                               y=ADL, 
-                               yend=ADP), color="grey75", size=2) +
-    geom_segment(data=filter(cdCI,type=="ADR"), 
-                 aes(x=feature, 
-                     xend=feature, 
-                     yend=CI1, 
-                     y=0), color="indianred4", size=2) +
-    theme_set(theme_minimal()) +
-    xlab("") +
-    facet_grid(facet~set) +
-    ylab("Shapley value") +
-    scale_fill_manual(values=colpal) +
-    scale_colour_manual(values=colpal) +
-    scale_shape_manual(values=c(15,16,17)) +
-    geom_jitter(alpha=0.4,width=0.14,size=0.75,
-                aes(x=feature,y=value,colour=type,shape=type)) +
-    theme(strip.text.y = element_blank()) +
-    geom_point(data=cdCI, aes(x=feature, y=CI1, shape=type),  size=1) +
-    geom_crossbar(data=cdCI, fatten=1, alpha=0.3, width=0.3,linetype=0,
-                  aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
-                      colour=type, fill=type)) +
-    geom_hline(data=data.frame(facet="F2"),
-               aes(yintercept=0), colour="grey",linetype=1)
+  if (type == "both") {
+    ggplot(data=cdN2) +
+      geom_segment(data=cd3, aes(x=feature, 
+                                 xend=feature, 
+                                 y=ADL, 
+                                 yend=ADP), color="grey75", size=2) +
+      geom_segment(data=filter(cdCI,type=="ADR"), 
+                   aes(x=feature, 
+                       xend=feature, 
+                       yend=CI1, 
+                       y=0), color="indianred4", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      facet_grid(facet~set) +
+      ylab("Shapley value") +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      theme(strip.text.y = element_blank()) +
+      geom_point(data=cdCI, aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI, fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey",linetype=1)
+    
+  } else if (type == "ADLADP") {
+    
+    
+    ggplot(data=cdN2 %>% filter(type != "ADR")) +
+      geom_segment(data=cd3, aes(x=feature, 
+                                 xend=feature, 
+                                 y=ADL, 
+                                 yend=ADP), color="grey75", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      facet_grid(~set) +
+      ylab("Shapley value") +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      theme(strip.text.y = element_blank()) +
+      geom_point(data=cdCI %>% filter(type != "ADR"), 
+                 aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI %>% filter(type != "ADR"), fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey",linetype=1)
+    
+  } else if (type == "ADR") {
+    
+    ggplot(data=cdN2 %>% filter(type == "ADR")) +
+      geom_segment(data=filter(cdCI,type == "ADR"), 
+                   aes(x=feature, 
+                       xend=feature, 
+                       yend=CI1, 
+                       y=0), color="indianred4", size=2) +
+      theme_set(theme_minimal()) +
+      xlab("") +
+      facet_grid(~set) +
+      ylab("Shapley value") +
+      scale_fill_manual(values=colpal) +
+      scale_colour_manual(values=colpal) +
+      scale_shape_manual(values=c(15,16,17)) +
+      geom_jitter(alpha=0.4,width=0.14,size=0.75,
+                  aes(x=feature,y=value,colour=type,shape=type)) +
+      theme(strip.text.y = element_blank()) +
+      geom_point(data=cdCI %>% filter(type == "ADR"), 
+                 aes(x=feature, y=CI1, shape=type),  size=1) +
+      geom_crossbar(data=cdCI %>% filter(type == "ADR"), 
+                    fatten=1, alpha=0.3, width=0.3,linetype=0,
+                    aes(y=CI1, ymin=CI2, ymax=CI3, x=feature,
+                        colour=type, fill=type)) +
+      geom_hline(data=data.frame(facet="F2"),
+                 aes(yintercept=0), colour="grey", linetype=1)
+  } else {
+    stop("type ", type, " is unrecognised") 
+  }
 }
 
 basic_xgb_test2 <- function(bst, sdat4way) {
@@ -709,7 +869,8 @@ plot_compare_DARRP_N_drift <- function(
   shap_index = c(1,5), #only two allowed
   shap_type = c("ADL", "ADR"), 
   y_name = "Shapley value",
-  leg_labs = unname(c(TeX("$X_1"),TeX("$X_2"),TeX("$X_3"),TeX("$X_4")))) {
+  leg_labs = unname(c(TeX("$X_1"),TeX("$X_2"),TeX("$X_3"),TeX("$X_4"))),
+  type = "both") {
   
   m <- dim(cdN_all)[4]
   cd2 <- matrix(ncol = d, nrow = 0)
@@ -728,49 +889,80 @@ plot_compare_DARRP_N_drift <- function(
     pivot_longer(all_of(feature_names), names_to = "feature") %>% 
     pivot_wider(names_from = CI, values_from = value, names_prefix = "CI")
   
-  plt <- ggplot(data=cd2, aes(x=time, y=CI1, colour=feature, fill=feature,
-                              shape=feature, linetype=feature)) + 
-    geom_point() + geom_line() +
-    geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
-    scale_x_continuous(breaks = 0:m) +
-    scale_y_continuous(name = y_name) +
-    scale_colour_discrete(labels=leg_labs) +
-    scale_shape_discrete(labels=leg_labs) +
-    scale_fill_discrete(labels=leg_labs) +
-    scale_linetype_discrete(labels=leg_labs) + 
-    theme_set(theme_minimal())  +
-    facet_grid(S ~ .) +
-    theme(strip.text.y.right = element_text(angle = 0))
-  return(plt)
+  if (type == "both") {
+    ggplot(data=cd2, aes(x=time, y=CI1, colour=feature, fill=feature,
+                         shape=feature, linetype=feature)) + 
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_colour_discrete(labels=leg_labs) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      scale_linetype_discrete(labels=leg_labs) + 
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0))
+  } else if (type == "ADL") {
+    ggplot(data=cd2 %>% filter(S == "ADL"), aes(x=time, y=CI1, colour=feature, fill=feature,
+                                                shape=feature, linetype=feature)) + 
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_colour_discrete(labels=leg_labs) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      scale_linetype_discrete(labels=leg_labs) + 
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0))
+  } else if (type == "ADR") {
+    ggplot(data=cd2 %>% filter(S == "ADR"), aes(x=time, y=CI1, colour=feature, fill=feature,
+                                                shape=feature, linetype=feature)) + 
+      geom_point() + geom_line() +
+      geom_ribbon(aes(ymin=CI2, ymax=CI3), alpha=0.1) +
+      scale_x_continuous(breaks = 0:m) +
+      scale_y_continuous(name = y_name) +
+      scale_colour_discrete(labels=leg_labs) +
+      scale_shape_discrete(labels=leg_labs) +
+      scale_fill_discrete(labels=leg_labs) +
+      scale_linetype_discrete(labels=leg_labs) + 
+      theme_set(theme_minimal())  +
+      facet_grid(S ~ .) +
+      theme(strip.text.y.right = element_text(angle = 0))
+  } else {
+    stop("type ", type, " not recognised")
+  }
 }
 
 plot_compare_DARRP_N <- function(cdN, p = c(0.025,0.975), main, valid = F,
                                  all_labs = T) {
-   feature_names <- dimnames(cdN)[[2]]
-   cd <- apply(cdN, FUN = mean, MARGIN = c(1,2))
-   cd_L <- apply(cdN, FUN = quantile, MARGIN = c(1,2), probs = p[1])
-   cd_U <- apply(cdN, FUN = quantile, MARGIN = c(1,2), probs = p[2])
-
-   centers <- plot_compare_DARRP(cd, main = main, valid = valid, all_labs = all_labs)
-   arrows(centers, cd_L, centers, cd_U, 
-          lwd = 1.5, angle = 90, code = 3, length = 0.05)
-   segments(centers, cd_L, centers, cd_U, lwd = 1.5)
+  feature_names <- dimnames(cdN)[[2]]
+  cd <- apply(cdN, FUN = mean, MARGIN = c(1,2))
+  cd_L <- apply(cdN, FUN = quantile, MARGIN = c(1,2), probs = p[1])
+  cd_U <- apply(cdN, FUN = quantile, MARGIN = c(1,2), probs = p[2])
+  
+  centers <- plot_compare_DARRP(cd, main = main, valid = valid, all_labs = all_labs)
+  arrows(centers, cd_L, centers, cd_U, 
+         lwd = 1.5, angle = 90, code = 3, length = 0.05)
+  segments(centers, cd_L, centers, cd_U, lwd = 1.5)
 }
 
 plot_compare_DARRP <- function(s,
-     leg_loc = "topright", main = "untitled",
-     valid = F, all_labs = T) {
+                               leg_loc = "topright", main = "untitled",
+                               valid = F, all_labs = T) {
   if(!valid) {
     legend <- c("ERDA test","ERDA train",
-      "PDA test", "PDA train", 
-      "RDA test","RDA train")
+                "PDA test", "PDA train", 
+                "RDA test","RDA train")
     cols <- c("gray50","gray75",
               "blue", "lightblue",
               "darkred","red3") 
   } else {
     legend <- c("ERDA test", "ERDA train", "ERDA valid",
-        "PDA test", "PDA train",  "PDA valid",
-        "RDA test","RDA train", "RDA valid")
+                "PDA test", "PDA train",  "PDA valid",
+                "RDA test","RDA train", "RDA valid")
     cols <- c("gray50","gray75","gray100",
               "blue", "lightblue","lightsteelblue2",
               "darkred","red3","violetred3")
@@ -780,11 +972,11 @@ plot_compare_DARRP <- function(s,
     cols <- c("gray25", cols)
   }
   centers <- barplot(s,
-               xlab = "Feature",
-               ylab = "Attribution",
-               col = cols,
-               beside = T,
-               main = main)
+                     xlab = "Feature",
+                     ylab = "Attribution",
+                     col = cols,
+                     beside = T,
+                     main = main)
   legend(x = leg_loc, legend = legend, 
          col = cols, pch = rep(15,7 + valid*3))
   centers
@@ -1058,3 +1250,4 @@ run_evaluations <- function(data_gen, utility, n = 1e3,  plots = F, ...) {
               shapp_test = SHAP_test$shapp,
               dat = dat))
 }
+

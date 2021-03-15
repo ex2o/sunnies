@@ -23,11 +23,11 @@ source("Applications_helpers.R")
 
 
 ### R2 LINEAR EXAMPLE -------------------------------------------------------
-n <- 1e4
+n <- 1e4  # sample size
+N <- 100  # resamples
+k <- 1000 # resample size
 dat <- dat_unif_squared(n = n) %>% 
   data.frame()
-N <- 100
-k <- 1000
 coeffs <- matrix(NA, nrow = N, ncol = 2)
 R2 <- vector(mode = "numeric", length = N)
 for (i in 1:N) {
@@ -57,19 +57,23 @@ quantile(R2, probs = c(0.025, 0.975))
 mean(R2)
 
 
-### LDA Example 1 -----------------------------------------------------------
+### R2 COMPARISONS ----------------------------------------------------------
 # The repetitions producing violin plots is in python, but here is similar:
 result1 <- run_evaluations(dat_unif_squared, utility = DC, n = 1e3, plots = T)
 
-### LDA Examples 2 and 3  ----------------------------------------------------
+### DISCRETE XOR EXAMPLE  ---------------------------------------------------
 # (which should be the same example)
 # This example should be done exactly by hand, but here is a simulation.
 # When it is calculated exactly, the shapley values will be equal to each other:
 result2 <- run_evaluations(dat_catcat_XOR, utility = DC, n = 1e3, plots = T)
 
-### EXAMPLE 1 -----------------------------------------------------------
+### CONCEPT DRIFT EXAMPLE 4.1.1 ----------------------------------------------
 # One feature becomes more important, one less important.
-n <- 1e4; m <- 10; d <- 4; N <- 100; s <- 1000
+n <- 1e4  # sample size
+m <- 10   # max time
+d <- 4    # features
+N <- 100  # resamples
+s <- 1000 # resample size
 shaps_lab <- matrix(0, nrow = m+1, ncol = d) 
 shaps_res <- matrix(0, nrow = m+1, ncol = d)
 mse <- vector(mode = "numeric", length = m+1)
@@ -83,9 +87,9 @@ for (t in 0:m) {
   xgbtt <- basic_xgb_test(xgb, sdatt) # Model is tested each time
   mse[t+1] <- xgbtt$test_mse
   cdNt <- compare_DARRP_N(sdatt, xgbtt, features = 1:4, 
-                         feature_names = paste0("x",1:4),
-                         sample_size = s, N = N,
-                         valid = F, all_labs = F)
+                          feature_names = paste0("x",1:4),
+                          sample_size = s, N = N,
+                          valid = F, all_labs = F)
   cdN_all[,,,t] <- cdNt
   datt <- dat_t(n, d, t = t, max_t = m)
   sdatt <- split_dat(datt)
@@ -93,12 +97,22 @@ for (t in 0:m) {
 
 cdN_all <- readRDS("results/run1_cdN_drift.Rds")
 mse <- readRDS("results/run1_cdN_drift_mse.Rds")
-pdf(file="Drift_ADL_ADR.pdf",width=5,height=4)
-plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5))
+plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="both")
+
+pdf(file="Figure3a.pdf",width=5,height=4)
+plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="ADL")
 dev.off()
+pdf(file="Figure3b.pdf",width=5,height=4)
+plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="ADR")
+dev.off()
+
 # ------------
-pdf(file="Drift_ADL_ADR_lines.pdf",width=5,height=4)
-plot_compare_DARRP_N_drift2(cdN_all, shap_index = c(1,5))
+pdf(file="Figure3a.pdf",width=5,height=4)
+plot_compare_DARRP_N_drift2(cdN_all, shap_index = c(1,5), type="ADL")
+dev.off()
+
+pdf(file="Figure3b.pdf",width=5,height=4)
+plot_compare_DARRP_N_drift2(cdN_all, shap_index = c(1,5), type="ADR")
 dev.off()
 
 
@@ -120,18 +134,31 @@ lmodel2t <- basic_lmodel_test(lmodel2, sdat)
 
 colpal <- c("#CC79A7", "#0072B2", "#D55E00")
 cdN2 <- readRDS("results/run1_cdN_linear2.Rds")
-pdf(file="DARRP_interact.pdf",width=5,height=4)
-plot_compare_DARRP_N_interact_ADL_ADP(cdN)
+# pdf(file="DARRP_interact.pdf",width=5,height=4)
+# plot_compare_DARRP_N_interact_ADL_ADP(cdN)
+# dev.off()
+# pdf(file="DARRP_interact2.pdf",width=5,height=4)
+# plot_compare_DARRP_N_interact_ADL_ADP(cdN2)
+# dev.off()
+
+pdf(file="Figure5a.pdf",width=5,height=4)
+plot_compare_DARRP_N_interact_all(cdN, colpal=colpal, type = "ADLADP",
+                                  ylim = c(-0.05,0.4))
 dev.off()
-pdf(file="DARRP_interact2.pdf",width=5,height=4)
-plot_compare_DARRP_N_interact_ADL_ADP(cdN2)
+pdf(file="Figure5b.pdf",width=5,height=4)
+plot_compare_DARRP_N_interact_all(cdN, colpal=colpal, type = "ADR",
+                                  ylim = c(-0.05,0.4))
 dev.off()
-pdf(file="DARRP_interact_all.pdf",width=5,height=4)
-plot_compare_DARRP_N_interact_all(cdN, colpal=colpal)
+pdf(file="Figure6a.pdf",width=5,height=4)
+plot_compare_DARRP_N_interact_all(cdN2, colpal=colpal, type = "ADLADP",
+                                  ylim = c(0,0.3))
 dev.off()
-pdf(file="DARRP_interact_all2.pdf",width=5,height=4)
-plot_compare_DARRP_N_interact_all(cdN2, colpal=colpal)
+pdf(file="Figure6b.pdf",width=5,height=4)
+plot_compare_DARRP_N_interact_all(cdN2, colpal=colpal, type = "ADR", 
+                                  ylim = c(0,0.3))
 dev.off()
+plot_compare_DARRP_N_interact_all(cdN, colpal=colpal, type = "both",
+                                  ylim = c(-0.05,0.4))
 
 
 ### Application 1 -----------------------------------------------------------
@@ -158,7 +185,12 @@ cdN4way <- compare_DARRRP_N_gender_4way(
   sdat4way, xgb, sample_size = 1000, N = 100,
   features = fts, feature_names = fnams)
 #saveRDS(cdN4way3, "run1_cdN4way3.Rds")
-#cdN4way <- readRDS("results/run1_cdN4way.Rds")
-pdf(file="DARRP_4way.pdf",width=5,height=4)
-plot_compare_DARRP_N_4way(cdN4way$cdN)
+cdN4way <- readRDS("results/run1_cdN4way.Rds")
+pdf(file="Figure7a.pdf",width=5,height=4)
+plot_compare_DARRP_N_4way(cdN4way$cdN, type = "ADLADP")
 dev.off()
+pdf(file="Figure7b.pdf",width=5,height=4)
+plot_compare_DARRP_N_4way(cdN4way$cdN, type = "ADR")
+dev.off()
+
+plot_compare_DARRP_N_4way(cdN4way$cdN, type = "both")
