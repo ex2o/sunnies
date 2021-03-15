@@ -99,19 +99,19 @@ cdN_all <- readRDS("results/run1_cdN_drift.Rds")
 mse <- readRDS("results/run1_cdN_drift_mse.Rds")
 plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="both")
 
-pdf(file="Figure3a.pdf",width=5,height=4)
+pdf(file="Figure3a.pdf",width=5,height=3)
 plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="ADL")
 dev.off()
-pdf(file="Figure3b.pdf",width=5,height=4)
+pdf(file="Figure3b.pdf",width=5,height=3)
 plot_compare_DARRP_N_drift(cdN_all, shap_index = c(1,5), type="ADR")
 dev.off()
 
 # ------------
-pdf(file="Figure3a.pdf",width=5,height=4)
+pdf(file="Figure3a.pdf",width=5,height=3)
 plot_compare_DARRP_N_drift2(cdN_all, shap_index = c(1,5), type="ADL")
 dev.off()
 
-pdf(file="Figure3b.pdf",width=5,height=4)
+pdf(file="Figure3b.pdf",width=5,height=3)
 plot_compare_DARRP_N_drift2(cdN_all, shap_index = c(1,5), type="ADR")
 dev.off()
 
@@ -141,19 +141,19 @@ cdN2 <- readRDS("results/run1_cdN_linear2.Rds")
 # plot_compare_DARRP_N_interact_ADL_ADP(cdN2)
 # dev.off()
 
-pdf(file="Figure5a.pdf",width=5,height=4)
+pdf(file="Figure5a.pdf",width=5,height=3)
 plot_compare_DARRP_N_interact_all(cdN, colpal=colpal, type = "ADLADP",
                                   ylim = c(-0.05,0.4))
 dev.off()
-pdf(file="Figure5b.pdf",width=5,height=4)
+pdf(file="Figure5b.pdf",width=5,height=3)
 plot_compare_DARRP_N_interact_all(cdN, colpal=colpal, type = "ADR",
                                   ylim = c(-0.05,0.4))
 dev.off()
-pdf(file="Figure6a.pdf",width=5,height=4)
+pdf(file="Figure6a.pdf",width=5,height=3)
 plot_compare_DARRP_N_interact_all(cdN2, colpal=colpal, type = "ADLADP",
                                   ylim = c(0,0.3))
 dev.off()
-pdf(file="Figure6b.pdf",width=5,height=4)
+pdf(file="Figure6b.pdf",width=5,height=3)
 plot_compare_DARRP_N_interact_all(cdN2, colpal=colpal, type = "ADR", 
                                   ylim = c(0,0.3))
 dev.off()
@@ -186,10 +186,10 @@ cdN4way <- compare_DARRRP_N_gender_4way(
   features = fts, feature_names = fnams)
 #saveRDS(cdN4way3, "run1_cdN4way3.Rds")
 cdN4way <- readRDS("results/run1_cdN4way.Rds")
-pdf(file="Figure7a.pdf",width=5,height=4)
+pdf(file="Figure7a.pdf",width=5,height=3)
 plot_compare_DARRP_N_4way(cdN4way$cdN, type = "ADLADP")
 dev.off()
-pdf(file="Figure7b.pdf",width=5,height=4)
+pdf(file="Figure7b.pdf",width=5,height=3)
 plot_compare_DARRP_N_4way(cdN4way$cdN, type = "ADR")
 dev.off()
 
